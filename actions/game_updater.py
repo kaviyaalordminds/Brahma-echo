@@ -5,12 +5,16 @@ import json
 import time
 import subprocess
 import threading
-import winreg
 from pathlib import Path
 from datetime import datetime
 
+if os.name == "nt":
+    import winreg
+
 
 def _find_steam_path() -> Path | None:
+    if os.name != "nt":
+        return None
     registry_keys = [
         (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Valve\Steam"),
         (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Valve\Steam"),
@@ -37,6 +41,8 @@ def _find_steam_path() -> Path | None:
 
 
 def _find_epic_path() -> Path | None:
+    if os.name != "nt":
+        return None
     registry_keys = [
         (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\EpicGames\EpicGamesLauncher"),
         (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\EpicGames\EpicGamesLauncher"),
@@ -509,7 +515,9 @@ def _handle_install_dialog_pyautogui(game_name: str, best_drive: dict) -> str:
     try:
         import pyautogui
         import pygetwindow as gw
-    except ImportError:
+    except Exception:
+        # ImportError (module missing) or NotImplementedError (pygetwindow has
+        # no Linux support) both mean this automation path isn't available here.
         return f"Install dialog opened for '{game_name}'. Please select '{best_drive['letter']}:' and click Install manually."
 
     pyautogui.FAILSAFE = False
@@ -715,6 +723,10 @@ def _get_schedule_status() -> str:
 
 
 def game_updater(parameters: dict, player=None, speak=None) -> str:
+    if os.name != "nt":
+        return ("Game Updater (Steam/Epic install automation) currently requires Windows "
+                "and isn't available on this operating system yet.")
+
     p         = parameters or {}
     action    = p.get("action",    "update").lower().strip()
     platform  = p.get("platform",  "both").lower().strip()

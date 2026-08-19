@@ -11100,8 +11100,14 @@ class BrahmaConnectDevicesPage(QFrame):
             self._onboarding_offer = dict(service.create_pairing_offer(device_name="Brahma Connect", platform="gateway"))
             code = str(self._onboarding_offer.get("pairing_code") or "------")
             self._onb_code_lbl.setText(code)
-            self._onb_status_lbl.setText("WAITING FOR CONNECTION")
-            
+            offer_host = str(self._onboarding_offer.get("host") or "")
+            if offer_host in ("127.0.0.1", "localhost", "::1"):
+                self._onb_status_lbl.setText(
+                    "COULD NOT DETECT LAN IP — use 'Enter IP Manually' on the phone instead of scanning."
+                )
+            else:
+                self._onb_status_lbl.setText("WAITING FOR CONNECTION")
+
             payload = self._onboarding_offer
             text = json.dumps(payload, sort_keys=True, ensure_ascii=False)
             if qrcode is not None:

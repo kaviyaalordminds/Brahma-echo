@@ -9,19 +9,19 @@ duckduckgo-search
 playwright          
 pyautogui
 pyperclip
-pygetwindow       
+pygetwindow; sys_platform == "win32"
 opencv-python
 numpy
 mediapipe
 mss
 Pillow
 psutil
-comtypes
-pycaw               
-win10toast          
+comtypes; sys_platform == "win32"
+pycaw; sys_platform == "win32"
+win10toast; sys_platform == "win32"
 send2trash
 youtube-transcript-api
-pywinauto
+pywinauto; sys_platform == "win32"
 pyaudio
 openpyxl
 python-pptx
@@ -31,6 +31,7 @@ discord.py
 fastapi
 uvicorn[standard]
 cryptography
+zeroconf
 qrcode[pil]
 python-multipart
 PyQt6

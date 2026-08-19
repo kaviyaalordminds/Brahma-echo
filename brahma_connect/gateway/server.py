@@ -12,6 +12,8 @@ from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse
 import uvicorn
 
+from net_access import ensure_network_access
+
 from .capability_manager import CapabilityManager
 from .command_router import CommandRouter
 from .device_manager import DeviceManager
@@ -523,10 +525,33 @@ class BrahmaGateway:
         if not self.config.enabled:
             return
         self._running = True
+
+        # Open the LAN firewall for this port the same way the dashboard does.
+        # Runs in a background thread - never blocks uvicorn startup.
+        asyncio.get_event_loop().run_in_executor(
+            None, lambda: ensure_network_access(self.config.port, label="Brahma Connect")
+        )
+
         advertised = False
         if self.config.advertise:
             advertised = self.discovery.start(host=self.config.host, port=self.config.port, properties={"service": "brahma", "version": "1"})
-        self._append_log("GATEWAY_STARTING", host=self.config.host, port=self.config.port, advertised=advertised)
+            if not advertised:
+                print("[Brahma Connect] mDNS advertising unavailable (install the 'zeroconf' package "
+                      "to enable 'Auto Discover' on the Android app). QR code and manual IP pairing "
+                      "still work.")
+        advertised_host = local_ip() if self.config.host in {"0.0.0.0", "::"} else self.config.host
+        if advertised_host == "127.0.0.1":
+            print("[Brahma Connect] WARNING: could not determine this PC's LAN IP address; "
+                  "falling back to 127.0.0.1, which your phone cannot reach. Use 'Enter IP Manually' "
+                  "on the Android app with this PC's real LAN IP instead.")
+        self._append_log(
+            "GATEWAY_STARTING",
+            host=self.config.host,
+            port=self.config.port,
+            advertised=advertised,
+            advertised_host=advertised_host,
+        )
+        print(f"[Brahma Connect] Listening on {self.config.host}:{self.config.port}  (LAN address: {advertised_host}:{self.config.port})")
         try:
             cfg = uvicorn.Config(
                 self.app,

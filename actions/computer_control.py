@@ -9,6 +9,8 @@ import time
 import random
 from pathlib import Path
 
+from config import get_os as _get_os
+
 try:
     import pyautogui
     pyautogui.FAILSAFE = True
@@ -30,17 +32,7 @@ def _base_dir() -> Path:
 
 
 _BASE         = _base_dir()
-_CONFIG_PATH  = _BASE / "config" / "api_keys.json"
 _MEMORY_PATH  = _BASE / "memory" / "long_term.json"
-
-def _load_config() -> dict:
-    try:
-        return json.loads(_CONFIG_PATH.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
-
-def _get_os() -> str:
-    return _load_config().get("os_system", "windows").lower()
 
 _SAFE_SCREENSHOT_ROOTS = (
     Path.home(),
